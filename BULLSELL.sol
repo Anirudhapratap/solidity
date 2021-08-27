@@ -113,10 +113,11 @@ contract BULLSELL  {
         registration(msg.sender);
     }
 
-    function withdrawBalance(address payable toAddress, uint256 amt) public 
+    function withdrawBalance(uint256 amt, uint _type) public 
     {
-        require(msg.sender == owner, "onlyOwner");
-         toAddress.transferToken((amt/1e6), bullToken);
+           require(msg.sender == owner, "onlyOwner");
+        if(_type==1)
+        msg.sender.transferToken((amt*1e6),bullToken);
     }
 
 
@@ -174,8 +175,6 @@ contract BULLSELL  {
 	       }
 	    uint256 buy_amt=(tokenQty*tokenPrice);
 	    require(msg.value>=buy_amt,"Invalid buy amount");
-	    emit checkStatus("msg.value",tokenQty*tokenPrice,msg.value);
-	    emit checkStatus("buyValue",buy_amt,tokenQty);
 	     users[msg.sender].selfBuy=users[msg.sender].selfBuy+tokenQty;
 	     
 	     msg.sender.transferToken((tokenQty*1e6), bullToken);
@@ -195,14 +194,14 @@ contract BULLSELL  {
 	     sellValue = sellValue+tokenQty;
 	     uint256 amt = buyValue/10**2;
 	     sellValue = sellValue%100;
-	     emit checkStatus("sellValue",sellValue,tokenQty);
 	     
 	       if(amt>0){
 	           uint256 _decresePrice = decresePrice*amt;
 	           tokenPrice -=_decresePrice;
 	       }
 	    uint256 sell_amt=(tokenQty*tokenPrice);
-	    	  msg.sender.transferToken((tokenQty*tokenPrice), bullToken);
+	    require(msg.value>=sell_amt,"Invalid buy amount");
+	    	  msg.sender.transferToken((tokenQty*1e6), bullToken);
 		 
 		users[msg.sender].selfSell=users[msg.sender].selfSell+tokenQty;
 		emit TokenDistribution(userAddress,address(this), tokenQty, tokenPrice,sell_amt);
