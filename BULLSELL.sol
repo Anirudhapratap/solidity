@@ -73,13 +73,11 @@ contract BULLSELL  {
 	
 	
 	uint public  MINIMUM_BUY = 1000;
-	uint256 public tokenPrice = 3*1e4;
+	uint256 public tokenPrice = 3e4;
     address public owner;
     
-    mapping(uint64 => uint) public buyLevel;
-    mapping(uint64 => uint) public priceLevel;
-
-  
+    uint256 public buyValue=0;
+    uint256 public sellValue=0;
     
     event Registration(address indexed user);
     event TokenDistribution(address indexed sender, address indexed receiver, uint total_token, uint live_rate, uint trx_amount);
@@ -166,14 +164,21 @@ contract BULLSELL  {
 	       registration(msg.sender);   
 	     }
 	     require(isUserExists(msg.sender), "user not exists");
-	     uint256 amt = tokenQty/10**2;
+	     buyValue = buyValue+tokenQty;
+	     uint256 amt = buyValue/10**2;
+	     buyValue = buyValue%100;
+	     
 	       if(amt>0){
 	           uint256 _incrasePrice = incrasePrice*amt;
 	           tokenPrice +=_incrasePrice;
 	       }
-	    uint256 buy_amt=tokenQty*tokenPrice;
+	    uint256 buy_amt=(tokenQty*tokenPrice);
+	    require(msg.value>=buy_amt,"Invalid buy amount");
+	    emit checkStatus("msg.value",tokenQty*tokenPrice,msg.value);
+	    emit checkStatus("buyValue",buy_amt,tokenQty);
 	     users[msg.sender].selfBuy=users[msg.sender].selfBuy+tokenQty;
-	     msg.sender.transferToken((tokenQty*tokenPrice), bullToken);
+	     
+	     msg.sender.transferToken((tokenQty*1e6), bullToken);
 	     
 	   
          total_token_buy=total_token_buy+tokenQty;
@@ -187,7 +192,10 @@ contract BULLSELL  {
 	   require(userAddress.tokenBalance(bullToken)>=(tokenQty),"Low Balance");
 	    require(!isContract(userAddress),"Can not be contract");
         
-	     uint256 amt = tokenQty/10**2;
+	     sellValue = sellValue+tokenQty;
+	     uint256 amt = buyValue/10**2;
+	     sellValue = sellValue%100;
+	     emit checkStatus("sellValue",sellValue,tokenQty);
 	     
 	       if(amt>0){
 	           uint256 _decresePrice = decresePrice*amt;
