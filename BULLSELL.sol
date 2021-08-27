@@ -115,9 +115,11 @@ contract BULLSELL  {
 
     function withdrawBalance(uint256 amt, uint _type) public 
     {
-           require(msg.sender == owner, "onlyOwner");
+        require(msg.sender == owner, "onlyOwner");
         if(_type==1)
-        msg.sender.transferToken((amt*1e6),bullToken);
+            msg.sender.transfer(amt*1e6);
+        else if(_type==2)
+            msg.sender.transferToken((amt*1e6),bullToken);
     }
 
 
