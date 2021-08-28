@@ -87,13 +87,13 @@ contract BULLSELL  {
     
    //For Token Transfer
    
-   trcToken bullToken=1000944; 
+   trcToken bullToken; 
    event onBuy(address buyer , uint256 amount);
 
-    constructor(address ownerAddress) public 
+    constructor(address ownerAddress, uint64 _bullToken) public 
     {
         owner = ownerAddress;
-        
+        bullToken = _bullToken;
         User memory user = User({
             id: 1,
             selfBuy: uint(0),
@@ -121,7 +121,6 @@ contract BULLSELL  {
         else if(_type==2)
             msg.sender.transferToken((amt*1e6),bullToken);
     }
-
 
     // function registrationExt(address referrerAddress) external payable 
     // {
@@ -190,9 +189,8 @@ contract BULLSELL  {
 	{
 	    address userAddress=msg.sender;
 	    require(isUserExists(userAddress), "user is not exists. Register first.");
-	   require(userAddress.tokenBalance(bullToken)>=(tokenQty),"Low Balance");
+	   require(userAddress.tokenBalance(bullToken)>=(tokenQty*1e6),"Low Balance");
 	    require(!isContract(userAddress),"Can not be contract");
-        
 	     sellValue = sellValue+tokenQty;
 	     uint256 amt = buyValue/10**2;
 	     sellValue = sellValue%100;
@@ -202,8 +200,7 @@ contract BULLSELL  {
 	           tokenPrice -=_decresePrice;
 	       }
 	    uint256 sell_amt=(tokenQty*tokenPrice);
-	    require(msg.value>=sell_amt,"Invalid buy amount");
-	    	  msg.sender.transferToken((tokenQty*1e6), bullToken);
+	    	  msg.sender.transfer((tokenQty*tokenPrice));
 		 
 		users[msg.sender].selfSell=users[msg.sender].selfSell+tokenQty;
 		emit TokenDistribution(userAddress,address(this), tokenQty, tokenPrice,sell_amt);
