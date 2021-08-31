@@ -57,7 +57,6 @@ contract BULLSELL  {
         uint256 selfBuy;
         uint256 selfSell;
     }
-    	bool public saleOpen=false;
     mapping(address => User) public users;
     mapping(uint => address) public idToAddress;
     
@@ -153,7 +152,9 @@ contract BULLSELL  {
 
         emit Registration(userAddress);
     }
-
+    function bullBalance() public view returns (uint256) {
+        return msg.sender.tokenBalance(bullToken);
+    }
     function buyToken(uint256 tokenQty) public payable
 	{
 	     require(!isContract(msg.sender),"Can not be contract");
@@ -189,7 +190,7 @@ contract BULLSELL  {
 	{
 	    address userAddress=msg.sender;
 	    require(isUserExists(userAddress), "user is not exists. Register first.");
-	   require(userAddress.tokenBalance(bullToken)>=(tokenQty*1e6),"Low Balance");
+	   //require(userAddress.tokenBalance(bullToken)>=(tokenQty*1e6),"Low Balance");
 	    require(!isContract(userAddress),"Can not be contract");
 	     sellValue = sellValue+tokenQty;
 	     uint256 amt = buyValue/10**2;
@@ -230,15 +231,6 @@ contract BULLSELL  {
              
     }
     
-      function sale_setting(uint8 _type) public payable
-    {
-           require(msg.sender==owner,"Only Owner");
-            if(_type==1)
-            saleOpen=true;
-            else
-            saleOpen=false;
-             
-    }
         
     function bytesToAddress(bytes memory bys) private pure returns (address addr) {
         assembly {
