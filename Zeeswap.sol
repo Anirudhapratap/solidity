@@ -52,7 +52,7 @@ contract ZEE{
     // uint public token_price =150000000000000;
     // uint public token_price =125000000000000;
     
-    uint public token_price = 52083333333334;
+    uint public token_price = 0.000052083333*1e18;
     
     
     uint public  total_token_buy = 0;
@@ -69,7 +69,7 @@ contract ZEE{
     
     event Registration(address indexed user, address indexed referrer, uint indexed userId, uint referrerId);
     event TokenPriceHistory(uint  previous, uint indexed inc_desc, uint new_price, uint8 type_of);
-    event TokenDistribution(address indexed sender, address indexed receiver, uint total_token, uint live_rate);
+    event TokenDistribution(address indexed sender, address indexed receiver, uint total_token, uint live_rate, uint256 amt);
     event onWithdraw(address  _user, uint256 withdrawalAmount);
     
    //For Token Transfer
@@ -173,13 +173,13 @@ contract ZEE{
 	     }
 	     require(isUserExists(msg.sender), "user not exists");
 	     require(tokenQty>=MINIMUM_BUY,"Invalid minimum quatity");	            
-	     uint buy_amt=((tokenQty/15e13)*(token_price/1e18))*1e18;
+	     uint buy_amt=((tokenQty/1e18)*(token_price));
 	     require(msg.value>=buy_amt,"Invalid buy amount");
 		 zeeToken.transfer(msg.sender , (tokenQty));
 		
 		 
 		 users[msg.sender].selfBuy=users[msg.sender].selfBuy+tokenQty;
-		 emit TokenDistribution(address(this), msg.sender, tokenQty, token_price);					
+		 emit TokenDistribution(address(this), msg.sender, tokenQty,token_price,buy_amt);					
 	 }
 	 
 
