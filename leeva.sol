@@ -1,8 +1,25 @@
 /**
- *Submitted for verification at BscScan.com on 2021-08-20
+ *Submitted for verification at BscScan.com on 2021-07-09
 */
-//Leeva  token Contract: 0xA2062122996cB440035E71fD5a92aC2505d6B96a
-//busdToken : 0xcF018aD3214F2F70E255eA054E8b21aFCf634115
+
+/**
+ *Submitted for verification at BscScan.com on 2021-06-29
+*/
+
+/**
+ *Submitted for verification at BscScan.com on 2021-06-28
+*/
+
+/**
+ *Submitted for verification at BscScan.com on 22021-06-28
+*/
+
+/**Leeva  token Contract: 0xA2062122996cB440035E71fD5a92aC2505d6B96a
+busdToken : 0xcF018aD3214F2F70E255eA054E8b21aFCf634115
+
+ */
+
+
 pragma solidity 0.5.4;
 
 interface IBEP20 {
@@ -51,8 +68,24 @@ library SafeMath {
     }
 }
    
-contract LEEVATOKEN{
-    using SafeMath for uint256;
+contract LEEVAPUBLICSALE  {
+     using SafeMath for uint256;
+     
+       struct Investment {
+        uint256 planId;
+        uint256 investmentDate;
+        uint256 investment;
+        uint256 lastWithdrawalDate;
+        uint256 currentDividends;
+        bool isExpired;
+    }
+
+    struct Plan {
+        uint256 dailyInterest;
+        uint256 term; //0 means unlimited
+        uint256 maxDailyInterest;
+    }
+     
     struct User {
         uint id;
         address referrer;
@@ -63,64 +96,55 @@ contract LEEVATOKEN{
         uint256 selfSell;
         uint256 planCount;
         mapping(uint256 => Investment) plans;
-        
-        
     }
-    struct Investment {
-        uint256 planId;
-        uint256 investmentDate;
-        uint256 investment;
-        uint256 lastWithdrawalDate;
-        uint256 currentDividends;
-        bool isExpired;
-    }
-    struct Plan {
-        uint256 dailyInterest;
-        uint256 term; //0 means unlimited
-        uint256 maxDailyInterest;
-    }
-    
-    bool public saleOpen=true;
-    
+    	bool public saleOpen=true;
     mapping(address => User) public users;
     mapping(uint => address) public idToAddress;
     Plan[] private investmentPlans_;
-    uint256 private constant INTEREST_CYCLE = 30 days;
     
+    uint256 private constant INTEREST_CYCLE = 30 days;
+
     uint public lastUserId = 2;
     uint256[] public refPercent=[50,25,15,10];
+
+    
+    
+    
     uint public  total_token_buy = 0;
 	uint public  total_token_sale = 0;
 	uint public  priceGap = 0;
-	uint8 public  priceIndex = 1;
+	uint64 public  priceIndex = 1;
 	
-	uint public  MINIMUM_BUY = 1e16;
+	uint public  MINIMUM_BUY = 1e18;
 	uint public  MINIMUM_SALE = 1e17;
-	uint public  MIN_BUY_REWARD = 2*1e17;
+	
+	
     address public owner;
+    
+    mapping(uint64 => uint) public buyLevel;
+    mapping(uint64 => uint) public priceLevel;
 
-    mapping(uint8 => uint) public buyLevel;
-    mapping(uint8 => uint) public priceLevel;
-    mapping(address => uint256) public boughtOf;
+  
     
     event Registration(address indexed user, address indexed referrer, uint indexed userId, uint referrerId);
-    event TokenPriceHistory(uint  previous, uint indexed inc_desc, uint new_price, uint8 type_of);
-    event TokenDistribution(address indexed sender, address indexed receiver, uint total_token, uint live_rate,uint256 bnb_amount);
+    event TokenDistribution(address indexed sender, address indexed receiver, uint total_token, uint live_rate, uint busd_amount);
     event onWithdraw(address  _user, uint256 withdrawalAmount);
-    event checkValue(string msg, uint256 value);
-    event onBuy(address buyer , uint256 amount);
+   
     
    //For Token Transfer
    
-    IBEP20 private leevaToken; 
-   IBEP20 private busdToken;
+   IBEP20 private leevaToken; 
+   IBEP20 private busdToken; 
+   event onBuy(address buyer , uint256 amount);
+   mapping(address => uint256) public boughtOf;
 
-    constructor(address ownerAddress,IBEP20 _busdToken,IBEP20 _leevaToken) public 
+    constructor(address ownerAddress, IBEP20 _busdToken, IBEP20 _leevaToken) public 
     {
         owner = ownerAddress;
+        
         leevaToken = _leevaToken;
         busdToken = _busdToken;
-        investmentPlans_.push(Plan(50,90*60*60*24,50)); //90 days and 5%
+        investmentPlans_.push(Plan(50,540*60*60*24,50)); //540 days and 5%
         
         User memory user = User({
             id: 1,
@@ -135,7 +159,7 @@ contract LEEVATOKEN{
         
         users[ownerAddress] = user;
         idToAddress[1] = ownerAddress;
-    
+        
         buyLevel[1]=25000000*1e18;
         buyLevel[2]=15000000*1e18;
         buyLevel[3]=5000000*1e18;
@@ -144,7 +168,6 @@ contract LEEVATOKEN{
         priceLevel[1]=3e17;
         priceLevel[2]=6e17;
         priceLevel[3]=12e17;
-       
     }
     
     function() external payable 
@@ -159,13 +182,14 @@ contract LEEVATOKEN{
     function withdrawBalance(uint256 amt,uint8 _type) public 
     {
         require(msg.sender == owner, "onlyOwner");
-         if(_type==1)
+        if(_type==1)
         msg.sender.transfer(amt);
         else if(_type==2)
         busdToken.transfer(msg.sender,amt);
         else
         leevaToken.transfer(msg.sender,amt);
     }
+
 
     function registrationExt(address referrerAddress) external payable 
     {
@@ -176,11 +200,14 @@ contract LEEVATOKEN{
     {
         require(!isUserExists(userAddress), "user exists");
         require(isUserExists(referrerAddress), "referrer not exists");
+        
         uint32 size;
         assembly {
             size := extcodesize(userAddress)
         }
+        
         require(size == 0, "cannot be a contract");
+        
         User memory user = User({
             id: lastUserId,
             referrer: referrerAddress,
@@ -200,14 +227,16 @@ contract LEEVATOKEN{
         lastUserId++;
         users[referrerAddress].partnersCount++;
         
+
         emit Registration(userAddress, referrerAddress, users[userAddress].id, users[referrerAddress].id);
     }
+    
     
     function _invest(address _addr,uint256 _amount,uint256 _planId) private 
     {
         require(_planId >= 0 && _planId < investmentPlans_.length, "Wrong investment plan id");
         uint256 uid = users[_addr].id;
-        require(uid>0,"Register First.");
+        require(uid>0,"Regster First.");
         uint256 planCount = users[_addr].planCount;
         
         users[_addr].plans[planCount].planId = _planId;
@@ -219,60 +248,53 @@ contract LEEVATOKEN{
 
         users[_addr].planCount = users[_addr].planCount.add(1);
     }
-    
-    function buyToken(uint tokenQty,address referrer) public payable
+
+    function buyToken(uint256 tokenQty,address referrer) public payable
 	{
 	     require(!isContract(msg.sender),"Can not be contract");
 	     require(tokenQty>=MINIMUM_BUY,"Invalid minimum quantity");
-	     require(msg.value>=MINIMUM_BUY,"Minimum 0.1 BNB");
-	     require(busdToken.balanceOf(msg.sender)>=(tokenQty),"Low Balance");
-	     require(busdToken.allowance(msg.sender,address(this))>=tokenQty,"Invalid buy amount");
+	     (uint256 buy_amt,uint256 newpriceGap, uint64 newpriceIndex)=calcBuyAmt(tokenQty);
+	     require(busdToken.balanceOf(msg.sender)>=(buy_amt),"Low Balance");
+	     require(busdToken.allowance(msg.sender,address(this))>=buy_amt,"Invalid buy amount");
+	     
 	     if(!isUserExists(msg.sender))
 	     {
 	       registration(msg.sender, referrer);   
 	     }
 	     require(isUserExists(msg.sender), "user not exists");
 	     
-	     uint256 buy_amt=calcBuyAmt(tokenQty);
-	     (uint256 tokenAmount,uint256 newpriceGap, uint8 newpriceIndex)=calcBuyToken((msg.value));
-	     users[msg.sender].selfBuy=users[msg.sender].selfBuy+tokenAmount;
+	     users[msg.sender].selfBuy=users[msg.sender].selfBuy+tokenQty;
 	     priceGap=newpriceGap;
 	     priceIndex=newpriceIndex;
-	     busdToken.transferFrom(msg.sender ,address(this), (tokenAmount));
-	     leevaToken.transfer(msg.sender , buy_amt);
+	     busdToken.transferFrom(msg.sender ,address(this), (buy_amt));
+	     leevaToken.transfer(msg.sender , tokenQty);
 	     
-	     if(calcBuyAmt(users[msg.sender].selfBuy)>=MIN_BUY_REWARD)
-	     {
-	     if(users[msg.sender].planCount==0)
-	      _invest(msg.sender,calcBuyAmt(users[msg.sender].selfBuy),0);
-	     else
-	      _invest(msg.sender,buy_amt,0);
-	     }
+	     _invest(msg.sender,buy_amt,0);
+	     
 	     if(msg.sender!=owner)
-	     _calculateReferrerReward(tokenAmount,users[msg.sender].referrer);
+	     _calculateReferrerReward(tokenQty,users[msg.sender].referrer);
 	     
-         total_token_buy=total_token_buy+tokenAmount;
-		 emit TokenDistribution(address(this), msg.sender, tokenAmount, priceLevel[priceIndex],msg.value);					
+         total_token_buy=total_token_buy+tokenQty;
+		 emit TokenDistribution(address(this), msg.sender, tokenQty, priceLevel[priceIndex],buy_amt);					
 	 }
 	 
-	function sellToken(uint tokenQty) public payable 
+	function sellToken(uint256 tokenQty) public payable 
 	{
 	    address userAddress=msg.sender;
-	    require(saleOpen,"Sale Stopped.");
+	    require(isUserExists(userAddress), "user is not exists. Register first.");
+	    require(saleOpen || users[userAddress].selfSell<(users[userAddress].refIncome+users[userAddress].levelIncome),"Sale Stopped.");
 	    require(leevaToken.balanceOf(userAddress)>=(tokenQty),"Low Balance");
 	    require(leevaToken.allowance(userAddress,address(this))>=(tokenQty),"Approve your token First");
 	    require(!isContract(userAddress),"Can not be contract");
-        require(isUserExists(userAddress), "user is not exists. Register first.");
-	   
-	    (uint256 bnb_amt,uint256 newpriceGap, uint8 newpriceIndex)=calcSellAmt(tokenQty);
-	     priceGap=newpriceGap;
-	     priceIndex=newpriceIndex;
+        
+	    
+	    uint256 busd_amt=(tokenQty/1e18)*priceLevel[priceIndex];
 	     
 		 leevaToken.transferFrom(userAddress ,address(this), (tokenQty));
-		 address(uint160(msg.sender)).transfer((bnb_amt));
+		 busdToken.transfer(userAddress ,busd_amt);
 		 
 		users[msg.sender].selfSell=users[msg.sender].selfSell+tokenQty;
-		emit TokenDistribution(userAddress,address(this), tokenQty, priceLevel[priceIndex],bnb_amt);
+		emit TokenDistribution(userAddress,address(this), tokenQty, priceLevel[priceIndex],busd_amt);
 		total_token_sale=total_token_sale+tokenQty;
 	 }
 	 
@@ -284,7 +306,7 @@ contract LEEVATOKEN{
 	         users[_referrer].refIncome=users[_referrer].refIncome+(_investment*refPercent[i])/1000;
 	         else
 	         users[_referrer].levelIncome=users[_referrer].levelIncome+(_investment*refPercent[i])/1000;
-             busdToken.transfer(_referrer,(_investment*refPercent[i])/1000); 
+            leevaToken.transfer(_referrer,(_investment*refPercent[i])/1000); 
             if(users[_referrer].referrer!=address(0))
             _referrer=users[_referrer].referrer;
             else
@@ -292,12 +314,12 @@ contract LEEVATOKEN{
 	     }
      }
 	
-	function calcBuyAmt(uint tokenQty) public view returns(uint256)
+	function calcBuyAmt(uint tokenQty) public view returns(uint256,uint256,uint64)
 	{
 	    uint256 amt;
 	    uint256 total_buy=priceGap+tokenQty;
 	    uint256 newPriceGap=priceGap;
-	    uint8 newPriceIndex=priceIndex;
+	    uint64 newPriceIndex=priceIndex;
 	    if(total_buy<buyLevel[1] && priceIndex==1)
 	    {
 	        amt=(tokenQty/1e18)*priceLevel[1];
@@ -305,7 +327,7 @@ contract LEEVATOKEN{
 	    }
 	    else
 	    {
-	        uint8 i=newPriceIndex;
+	        uint64 i=newPriceIndex;
 	        while(i<4 && tokenQty>0)
 	        {
 	            if((newPriceGap+tokenQty)>=buyLevel[i])
@@ -329,20 +351,20 @@ contract LEEVATOKEN{
 	        }
 	    }
 	    
-	    return (amt);
+	    return (amt,newPriceGap,newPriceIndex);
 	}
 	
-	function calcBuyToken(uint256 amount) public view returns(uint256,uint256,uint8)
+	function calcBuyToken(uint256 amount) public view returns(uint256,uint256,uint64)
 	{
 	    uint256 quatity;
 	    uint256 newPriceGap=priceGap;
-	    uint8 newPriceIndex=priceIndex;  
-	    uint8 i=newPriceIndex; 
+	    uint64 newPriceIndex=priceIndex;  
+	    uint64 i=newPriceIndex; 
 	    while(amount>0 && i<4)
 	    {
-	        if(i==4)
+	        if(i==3)
 	        {
-	            quatity=quatity+(amount/priceLevel[priceIndex]);
+	            quatity=quatity+(amount/priceLevel[newPriceIndex]);
 	            amount=0;
 	        }
 	        else
@@ -373,70 +395,9 @@ contract LEEVATOKEN{
 	     return (quatity,newPriceGap,newPriceIndex);
 	}
 	
-	function calcSellAmt(uint tokenQty) public view returns(uint256,uint256,uint8)
-	{
-	    uint256 amt;
-	    uint256 newPriceGap=priceGap;
-	    uint8 newPriceIndex=priceIndex;
-	    if(newPriceIndex==1)
-	    {
-	        amt=(tokenQty/1e18)*priceLevel[1];
-	        if(tokenQty>=newPriceGap)
-	        newPriceGap=0;
-	        else
-	        newPriceGap=newPriceGap-tokenQty;
-	    }
-	    else
-	    {
-	        uint8 i=newPriceIndex;
-	        while(i>=1 && tokenQty>0)
-	        {
-	            if(newPriceGap>0)
-	            {
-	                uint256 _left;
-	                if(newPriceGap>tokenQty)
-	                _left=tokenQty;
-	                else
-	                _left=newPriceGap;
-	                
-	                amt=(_left/1e18)*priceLevel[newPriceIndex];
-	                tokenQty=tokenQty-_left;
-	                newPriceGap=newPriceGap-_left;
-	            }
-	            else
-	            {
-	                if(newPriceIndex>1)
-	                {
-	                    newPriceIndex--;
-	                    i--;
-	                }
-	                if(buyLevel[i]>=tokenQty || newPriceIndex==1)
-	                { 
-	                    amt=(tokenQty/1e18)*priceLevel[newPriceIndex]; 
-	                    if(buyLevel[newPriceIndex]>=tokenQty)
-	                    newPriceGap=buyLevel[newPriceIndex]-tokenQty;
-	                    else
-	                    newPriceGap=0;
-	                    tokenQty=0;
-	                }
-	                else
-	                {
-	                   amt=(buyLevel[newPriceIndex]/1e18)*priceLevel[newPriceIndex]; 
-	                   tokenQty=tokenQty-buyLevel[newPriceIndex];
-	                   newPriceGap=0; 
-	                }
-	                
-	            }
-	                
-	            }
-	        
-	    }
-	    
-	    return (amt,newPriceGap,newPriceIndex);
-	}
 	
-    function withdraw() public payable {
-        require(msg.value == 0, "withdrawal doesn't allow to transfer simultaneously");
+	function withdraw() public payable {
+        require(msg.value == 0, "withdrawal doesn't allow to transfer trx simultaneously");
         uint256 uid = users[msg.sender].id;
         require(uid != 0, "Can not withdraw because no any investments");
         uint256 withdrawalAmount = 0;
@@ -467,10 +428,11 @@ contract LEEVATOKEN{
             users[msg.sender].plans[i].currentDividends += amount;
         }
         
-        leevaToken.transfer(msg.sender,(withdrawalAmount/priceLevel[priceIndex])*1e18);
+        leevaToken.transfer(address(this),(withdrawalAmount/priceLevel[priceIndex]));
 
-        emit onWithdraw(msg.sender, withdrawalAmount/priceLevel[priceIndex]*1e18);
+        emit onWithdraw(msg.sender, withdrawalAmount/priceLevel[priceIndex]);
     }
+	
 	
 	function getInvestmentPlanByUID(address _user) public view returns (uint256[] memory, uint256[] memory, uint256[] memory, uint256[] memory, uint256[] memory,uint256[] memory, bool[] memory) {
        
@@ -574,21 +536,16 @@ contract LEEVATOKEN{
              
     }
     
-    function sale_setting(uint8 _type) public payable
+      function sale_setting(uint8 _type) public payable
     {
            require(msg.sender==owner,"Only Owner");
             if(_type==1)
             saleOpen=true;
             else
             saleOpen=false;
+             
     }
-    
-    function reward_setting(uint _value) public payable
-    {
-        require(msg.sender==owner,"Only Owner");
-        MIN_BUY_REWARD=_value;
-    }
-    
+        
     function bytesToAddress(bytes memory bys) private pure returns (address addr) {
         assembly {
             addr := mload(add(bys, 20))
